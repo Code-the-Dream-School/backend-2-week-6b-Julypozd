@@ -3,7 +3,20 @@
 <button id="list-todos" type="button">List todos</button><br>
 <label>title</label><input id="todo-title"><label>created by</label>
 <input id="todo-created-by"><button id="create-todo" type="button">Create todo</button><br>
+
+<br>
+<h2>Enter ID to see items:</h2>
+<label>Todo Id   </label><input id="todo-id"><button id="list-items" type="button">LIST ITEMS</button>
+<br></br>
+<h2>Enter ID, NAME to create item:</h2>
+<label>Todo id:  </label><input id="todo-idnew"><label>Name:  </label><input id="item-name"><label> Done </label>
+<input type="checkbox" id="done-check-box"><button id="create-item" type="button">CREATE ITEM</button>
+<br>
+
 <div id="results-div"></div>
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   console.log('DOM fully loaded and parsed');
@@ -50,5 +63,55 @@ document.addEventListener('DOMContentLoaded', (event) => {
     console.log("sending data:",dataToSend)
     eventRequest.send(dataToSend);
   });
+
+
+  //NEW
+const listButton = document.getElementById('list-items');
+  const IdFieldtodo = document.getElementById('todo-id');
+  listButton.addEventListener('click', (event) => { 
+    var eventRequest = new XMLHttpRequest(); 
+    eventRequest.onreadystatechange = function () {
+      if(eventRequest.readyState === XMLHttpRequest.DONE) { 
+        if  (eventRequest.status === 200) { 
+          resultsDiv.innerHTML=''; // Clear out this resultsDiv
+          var jsonArr = JSON.parse(eventRequest.responseText); 
+          for (let i=0; i<jsonArr.length; i+=1) {
+            let parag = document.createElement('P');
+            parag.textContent = JSON.stringify(jsonArr[i]); // each is a todo object, which we convert to a string for display
+            resultsDiv.appendChild(parag); // and add it to the div
+          }
+        } else {
+          alert(`Return code ${eventRequest.status} ${eventRequest.statusText}`); // this is how we report errors
+        }
+      }
+    };
+    var todoId = IdFieldtodo.value;
+    eventRequest.open('GET', `http://localhost:3001/todos/${todoId}/items`);  
+    eventRequest.send();  
+  });
+  const createItemButton = document.getElementById('create-item');
+  const todoIdFieldNew = document.getElementById('todo-idnew');
+  const doneCheckBox= document.getElementById('done-check-box');
+  const nameItemField = document.getElementById('item-name')
+  createItemButton.addEventListener('click', (event) => { // event handler for the list todos button
+    var eventRequest = new XMLHttpRequest(); // we create this to set up for the Ajax call
+    eventRequest.onreadystatechange = function () { // event handler for the ajax call
+      if(eventRequest.readyState === XMLHttpRequest.DONE) { // only handle DONE
+        if  (eventRequest.status === 201) { // we expect a 201 from a POST
+          resultsDiv.innerHTML=eventRequest.responseText; // Clear out this resultsDiv
+        } else {
+          alert(`Return code ${eventRequest.status} ${eventRequest.statusText}`); // this is how we report errors
+        }
+      }
+    };
+    var todoIdN = todoIdFieldNew.value;
+    var itemName = nameItemField.value;
+    var doneB = doneCheckBox.checked;
+    var dataToSendN = {name: itemName, done: doneB};
+    eventRequest.open('POST', `http://localhost:3001/todos/${todoIdN}/items`);
+    eventRequest.setRequestHeader("Content-Type", "application/json");
+    eventRequest.send(JSON.stringify(dataToSendN));  
+  });
+
 });
 </script>
